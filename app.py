@@ -1,6 +1,6 @@
 import streamlit as st
 import itertools as it
-import math
+import random
 
 # ------------------ Tab Title & Header ------------------ #
 
@@ -73,7 +73,7 @@ def generate_groups(group_size: int, attendees: list):
     chunked_data = [
         attendees[i : i + group_size] for i in range(0, len(attendees), group_size)
     ]
-    # print(chunked_data)
+
     if len(chunked_data[-1]) == 1:
         lone = chunked_data.pop()
         chunked_data[-1] += lone
@@ -103,7 +103,7 @@ def generate_sesisons(sessions: int, group_size: int, attendees: list):
         sorted_sessions[session] = {}
         picked = []
         for room in range(int(rooms)):
-
+            random.shuffle(needed_sessions)
             for i, pick_session in enumerate(needed_sessions):
                 next_sesion = False
                 flatted_session = [name for names in pick_session for name in names]
