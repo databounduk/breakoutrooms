@@ -45,14 +45,12 @@ def group_size_recommender(attendees_num):
 
     if attendees_num <= 12:
         group_size_max = 2
-    if attendees_num >= 18:
+    if attendees_num >= 20:
         group_size_max = 4
     if attendees_num >= 30:
         group_size_max = 6
-    if attendees_num >= 50:
+    if attendees_num >= 40:
         group_size_max = 8
-    if attendees_num % 2 != 0:
-        group_size_max += 1
 
     return group_size_max
 
@@ -63,7 +61,7 @@ def session_recommender(group_size: int, attendees: list):
 
     needed_sessions = list(it.combinations(chunked_data, 2))
 
-    session_num = len(needed_sessions) / 2 - 1
+    session_num = len(needed_sessions) / 2
     if session_num <= 0:
         session_num = 1
 
