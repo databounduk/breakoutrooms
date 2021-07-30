@@ -8,7 +8,6 @@ import pandas as pd
 import base64
 import streamlit as st
 
-# import streamlit.components.v1 as components
 import itertools as it
 import random
 
@@ -48,7 +47,7 @@ with open("static/html/intro.html") as f:
 # ------------------ Application Functions ------------------ #
 
 
-def create_unique_sessions(attendees: List[list], room_size: int) -> dict:
+def create_session(attendees: List[list], room_size: int) -> dict:
     """
     Function to generate a possible number of scenrios for sessions everyone to meet each other. 
 
@@ -59,33 +58,21 @@ def create_unique_sessions(attendees: List[list], room_size: int) -> dict:
         scenarios : dict - A dict of possible scenarios, key is the number of sessions and the value is attendees in session
 
     """
+    randomised_attendees = attendees[:]
+    random.shuffle(randomised_attendees)
+    session = {}
+    room_num = 1
+    while bool(randomised_attendees) is True:
+        room_attendess = []
+        for i in range(room_size):
+            if bool(randomised_attendees) is False:
+                room_attendess.append("")
+            else:
+                room_attendess.append(randomised_attendees.pop())
+        session[f"Room {room_num}"] = room_attendess
+        room_num += 1
 
-    possible_sessions = list(it.combinations(attendees, room_size))
-    scenarios = {}
-
-    for i in range(1000):
-
-        random.shuffle(possible_sessions)
-        particpents = attendees[:]
-        choosen_sessions = []
-        for session in possible_sessions:
-            if not particpents:
-                break
-
-            for person in session:
-                try:
-                    particpents.remove(person)
-                except:
-                    pass
-
-            choosen_sessions.append(session)
-
-            if not particpents:
-                break
-
-        scenarios[len(choosen_sessions)] = choosen_sessions
-
-    return scenarios
+    return session
 
 
 def parse_attendees(attendees_raw: str, delimiter) -> List:
@@ -96,15 +83,6 @@ def parse_attendees(attendees_raw: str, delimiter) -> List:
         return [attendee.strip() for attendee in attendees_raw.strip().split("\t")]
     elif delimiter == "new line":
         return [attendee.strip() for attendee in attendees_raw.strip().split("\n")]
-
-
-def generate_dataframe(sessions):
-
-    table = {}
-    for index, session in enumerate(sessions):
-        table[f"Room {index + 1}"] = session
-
-    return pd.DataFrame(table)
 
 
 def get_table_download_link_csv(df):
@@ -124,7 +102,11 @@ delimiter = st.selectbox(
     "Please select the delimiter for your list of attendees", delimiters, index=2
 )
 
-room_size = int(st.number_input("Max Room Size", min_value=1, value=2))
+room_size = int(
+    st.number_input(
+        "Max People Per Room", min_value=1, max_value=len(attendees), value=2
+    )
+)
 
 # ------------------ Application Triggers ------------------ #
 
@@ -133,27 +115,16 @@ trigger = st.button("Generate Rooms")
 attendees_parsed = parse_attendees(attendees, delimiter)
 number_of_attendees = len(attendees_parsed)
 
-if number_of_attendees < room_size:
-    st.text("Room size is greater that the number of attendees")
+if trigger and attendees != "" and attendees != " ":
 
-elif trigger and attendees != "" and attendees != " ":
+    session = create_session(attendees_parsed, room_size)
 
-    sessions = create_unique_sessions(attendees_parsed, room_size)
+    df_sessions = pd.DataFrame(session)
 
-    lowest_sessions = min(sessions.keys())
-    chosen_session = sessions[lowest_sessions]
+    if len(session) < 11 and number_of_attendees < 100:
+        st.table(session)
 
-    cols = st.beta_columns(lowest_sessions)
-
-    for i in range(lowest_sessions):
-        room_num = i + 1
-        cols[i].write(f"<h4><u>Room {room_num}</u></h4>", unsafe_allow_html=True)
-        for name in chosen_session[i]:
-            cols[i].write(f"<b>{name}</b>", unsafe_allow_html=True)
-
-    df = generate_dataframe(chosen_session)
-
-    st.markdown(get_table_download_link_csv(df), unsafe_allow_html=True)
+    st.markdown(get_table_download_link_csv(df_sessions), unsafe_allow_html=True)
 
 # ------------------ Footer ------------------ #
 
